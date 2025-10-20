@@ -1,0 +1,32 @@
+[
+    {
+        "index": 1,
+        "item": "person",
+        "default_pressure_kPa": 50
+    },
+    {
+        "index": 2,
+        "item": "hot dog",
+        "default_pressure_kPa": 50
+    },
+    {
+        "index": 3,
+        "item": "dog",
+        "default_pressure_kPa": 50
+    },
+    {
+        "index": 4,
+        "item": "orange",
+        "default_pressure_kPa": 50
+    },
+    {
+        "index": 5,
+        "item": "mouse",
+        "default_pressure_kPa": 50
+    },
+    {
+        "index": 6,
+        "item": "apple",
+        "default_pressure_kPa": 50
+    }
+]
