@@ -13,18 +13,20 @@ The repository contains a minimal, hardware-friendly reference implementation so
 ┌────────────┐      ┌──────────────────────┐      ┌───────────────────┐
 │ OpenCV     │      │ Ultralytics YOLOv8   │      │ Output interfaces │
 │ video feed │ ───► │ detection / filtering│ ───► │  • PLC (pylogix)   │
-└────────────┘      └──────────────────────┘      │  • UDP socket      │
+└────────────┘      └──────────────────────┘      │  • PLC (Modbus TCP)│
+                                                  │  • UDP socket      │
                                                   │  • Console overlay │
                                                   └───────────────────┘
 ```
 1. `food_detection.py` acquires frames, runs YOLOv8, filters detections to the classes defined in your dataset, and looks up the desired pressure in `item_data.json`.
-2. Each new label is written to the PLC tags `Vision_Item_Index`, `Vision_Pressure`, and a `Vision_NewData` handshake pulse. You can use the same pattern for other protocols if pylogix is not available.
+2. Each new label is written to the PLC tags `Vision_Item_Index`, `Vision_Pressure`, and a `Vision_NewData` handshake pulse. You can reuse the detection loop for other protocols—see `presence_detection_modbus.py` for a Modbus example.
 3. `test1.py` demonstrates the same detection loop without PLC dependencies and can optionally emit JSON packets over UDP.
 
 ## Repository layout
 | Path | Purpose |
 | ---- | ------- |
 | `food_detection.py` | PLC-focused detection loop with pressure lookups and EtherNet/IP writes. |
+| `presence_detection_modbus.py` | Binary presence detection that updates a Modbus coil via `pymodbus`. |
 | `test1.py` | Lightweight detection viewer that can stream centroids over UDP. |
 | `item_data.json` | Ordered mapping from detection label to gripping pressure (kPa). The key order defines PLC item indices. |
 | `detected_items.json` | Example enumeration of indices/pressures for PLC testing and ladder-logic prototyping. |
@@ -67,6 +69,19 @@ The repository contains a minimal, hardware-friendly reference implementation so
 5. Press `q` in the window to end the session. The script closes the camera and PLC connection automatically and prints a summary list of detections with their pressures.
 
 **Tip:** If you want every frame to update the PLC (not just the first time an item appears), remove the `detected_items` guard in the loop and write on every iteration.
+
+## Running the Modbus presence detector (`presence_detection_modbus.py`)
+Use this script when you only need a binary "object present" signal instead of class-specific pressures.
+
+1. Adjust the configuration block at the top of the script:
+   - `MODEL_PATH`: YOLOv8 weights to load.
+   - `CONF_THRESHOLD`: minimum confidence to consider the scene occupied.
+   - `PLC_IP` / `PLC_PORT`: address of your Modbus TCP server.
+   - `PLC_COIL_ADDRESS`: coil that should reflect the detection state.
+   - Set `SEND_TO_PLC=False` to bench-test without a live PLC.
+2. Launch the script with `python presence_detection_modbus.py`.
+3. The console prints when the detection state flips; the coil is only updated on transitions to reduce network traffic.
+4. Press `q` to close the OpenCV window and release the camera. The Modbus connection is closed automatically.
 
 ## Running the UDP demo (`test1.py`)
 1. Set `SEND_TO_ROBOT=True` if you want to transmit detections over the network and specify `ROBOT_IP`/`ROBOT_PORT`.
